@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,15 +73,24 @@ func processMessage(msg interface{}) {
 
 // Compare function reflect.DeepEqual on slices
 // is recursive and element level
-func compareAggregateWindows() bool {
+func sortAggregates() bool {
 
-	return reflect.DeepEqual(aggWindowSlice, aggWindowSliceCopy)
+	for i := 1; i < len(aggWindowSlice); i++ {
+
+		currentAgg := aggWindowSlice[i]
+
+		for j := i - 1; j >= 0; j-- {
+
+		}
+	}
+
+	// return reflect.DeepEqual(aggWindowSlice, aggWindowSliceCopy)
 }
 
 // Print logic for time interval
 func printForInterval(duration time.Duration) {
 
-	same := compareAggregateWindows()
+	sorted := sortAggregates()
 
 	for x := range time.Tick(duration) {
 
