@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"sort"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -62,39 +62,48 @@ func processMessage(msg interface{}) {
 
 			aggWindowSliceCopy = append([]Aggregate(nil), aggWindowSlice...)
 
-			sort.Slice(aggWindowSlice, func(i, j int) bool {
-				return aggWindowSlice[i].startTime > aggWindowSlice[j].startTime
-			})
+			sortAggregates()
 
 		}
 	}
+
+}
+
+// Using insertion sort since messages
+// are usually in order
+func sortAggregates() []Aggregate {
+
+	var length = len(aggWindowSlice)
+
+	for i := 1; i < length; i++ {
+		j := i
+		for j > 0 {
+			if aggWindowSlice[j-1].startTime < aggWindowSlice[j].startTime {
+				aggWindowSlice[j-1], aggWindowSlice[j] = aggWindowSlice[j], aggWindowSlice[j-1]
+			}
+			j = j - 1
+		}
+	}
+
+	return aggWindowSlice
 
 }
 
 // Compare function reflect.DeepEqual on slices
 // is recursive and element level
-func sortAggregates() bool {
+func compareAggregateWindows() bool {
 
-	for i := 1; i < len(aggWindowSlice); i++ {
-
-		currentAgg := aggWindowSlice[i]
-
-		for j := i - 1; j >= 0; j-- {
-
-		}
-	}
-
-	// return reflect.DeepEqual(aggWindowSlice, aggWindowSliceCopy)
+	return reflect.DeepEqual(aggWindowSlice, aggWindowSliceCopy)
 }
 
 // Print logic for time interval
 func printForInterval(duration time.Duration) {
 
-	sorted := sortAggregates()
+	same := compareAggregateWindows()
 
 	for x := range time.Tick(duration) {
 
-		if same == true {
+		if same {
 			printSingleAgg(x)
 		} else {
 			printAggWindow(x)
@@ -172,7 +181,6 @@ func main() {
 	// Read messages off the buffered queue:
 	go func() {
 		for msgBytes := range chanMessages {
-			// logrus.Info("Message Bytes: ", msgBytes)
 			processMessage(msgBytes)
 		}
 	}()
