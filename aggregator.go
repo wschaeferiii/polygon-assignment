@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -63,12 +62,30 @@ func processMessage(msg interface{}) {
 
 			aggWindowSliceCopy = append([]Aggregate(nil), aggWindowSlice...)
 
-			sort.Slice(aggWindowSlice, func(i, j int) bool {
-				return aggWindowSlice[i].startTime > aggWindowSlice[j].startTime
-			})
+			sortAggregates()
 
 		}
 	}
+
+}
+
+// Using insertion sort since messages
+// are usually in order
+func sortAggregates() []Aggregate {
+
+	var length = len(aggWindowSlice)
+
+	for i := 1; i < length; i++ {
+		j := i
+		for j > 0 {
+			if aggWindowSlice[j-1].startTime < aggWindowSlice[j].startTime {
+				aggWindowSlice[j-1], aggWindowSlice[j] = aggWindowSlice[j], aggWindowSlice[j-1]
+			}
+			j = j - 1
+		}
+	}
+
+	return aggWindowSlice
 
 }
 
@@ -86,7 +103,7 @@ func printForInterval(duration time.Duration) {
 
 	for x := range time.Tick(duration) {
 
-		if same == true {
+		if same {
 			printSingleAgg(x)
 		} else {
 			printAggWindow(x)
@@ -164,7 +181,6 @@ func main() {
 	// Read messages off the buffered queue:
 	go func() {
 		for msgBytes := range chanMessages {
-			// logrus.Info("Message Bytes: ", msgBytes)
 			processMessage(msgBytes)
 		}
 	}()
